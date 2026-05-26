@@ -1,0 +1,73 @@
+import "std"
+import "sdl"
+
+#define EVENT_BUF_SIZE 64
+
+int main() {
+    int rc = SDL_Init(32);
+    if (rc != 0) {
+        print("SDL_Init failed");
+        return 1;
+    }
+
+    int win = SDL_CreateWindow("ObjFalcon SDL2", 805240832, 805240832, 640, 480, 4);
+    if (win == 0) {
+        print("SDL_CreateWindow failed");
+        SDL_Quit();
+        return 1;
+    }
+
+    int ren = SDL_CreateRenderer(win, -1, 2);
+    if (ren == 0) {
+        print("SDL_CreateRenderer failed");
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
+    }
+
+    int evt = _flr_alloc(64);
+
+    int running = 1;
+    int frames = 0;
+
+    while (running) {
+        while (SDL_PollEvent(evt)) {
+            int evtype = __peek(evt);
+            if (evtype == 256) {
+                running = 0;
+            }
+        }
+
+        int phase = frames / 60;
+        int r = 0; int g = 0; int b = 0;
+
+        if (phase == 0) { r = 200; }
+        elif (phase == 1) { g = 200; }
+        else { b = 200; }
+
+        SDL_SetRenderDrawColor(ren, r, g, b, 255);
+        SDL_RenderClear(ren);
+
+        SDL_SetRenderDrawColor(ren, 255, 255, 255, 255);
+        int rect = _flr_alloc(16);
+        __poke(rect,      270);
+        __poke(rect + 4,  190);
+        __poke(rect + 8,  100);
+        __poke(rect + 12, 100);
+        SDL_RenderFillRect(ren, rect);
+
+        SDL_RenderPresent(ren);
+        SDL_Delay(16);
+
+        frames += 1;
+        if (frames >= 180) {
+            running = 0;
+        }
+    }
+
+    SDL_DestroyRenderer(ren);
+    SDL_DestroyWindow(win);
+    SDL_Quit();
+    print("done");
+    return 0;
+}

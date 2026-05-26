@@ -134,7 +134,7 @@ typedef enum{
     TT_AND,TT_OR,TT_NOT,
     TT_TRUE,TT_FALSE,
     TT_BREAK,TT_CONTINUE,
-    TT_STRUCT,TT_IMPORT,TT_TYPEDEF,
+    TT_STRUCT,TT_IMPORT,TT_TYPEDEF,TT_EXTERN,
     TT_LBRACE,TT_RBRACE,
     TT_LPAREN,TT_RPAREN,
     TT_LBRACKET,TT_RBRACKET,
@@ -172,7 +172,7 @@ static const KW kws[]={
     {"and",TT_AND},{"or",TT_OR},{"not",TT_NOT},
     {"true",TT_TRUE},{"false",TT_FALSE},
     {"break",TT_BREAK},{"continue",TT_CONTINUE},
-    {"struct",TT_STRUCT},{"import",TT_IMPORT},{"typedef",TT_TYPEDEF},
+    {"struct",TT_STRUCT},{"import",TT_IMPORT},{"typedef",TT_TYPEDEF},{"extern",TT_EXTERN},
     {"char",TT_CHAR},{"unsigned",TT_UNSIGNED},
     {"enum",TT_ENUM},{"switch",TT_SWITCH},{"case",TT_CASE},{"default",TT_DEFAULT},
     {"do",TT_DO},{"sizeof",TT_SIZEOF},{"asm",TT_ASM},
@@ -522,7 +522,7 @@ typedef enum{
     N_INTLIT,N_LONGLIT,N_FLOATLIT,N_DOUBLELIT,N_STRLIT,N_BOOLLIT,N_IDENT,N_BINOP,N_UNOP,
     N_CALL,N_INDEX,N_FIELD,N_ARRAYLIT,
     N_TERNARY,N_SWITCH,N_CASE,N_DO,N_ASM,N_SIZEOF,
-    N_TYPEDEF_DECL
+    N_TYPEDEF_DECL,N_EXTERN
 }NK;
 
 typedef struct Node Node;
@@ -1127,6 +1127,47 @@ static Node *parse_program(void){
                 t==TT_HASH_ENDIF||t==TT_HASH_ELSE||t==TT_HASH_UNDEF||t==TT_HASH_INCLUDE){
             Node *s=parse_stmt();nl_push(&prog->body,s);
         }
+        else if(t==TT_EXTERN){
+            advance();skip_nl();
+            Node *n=mknode(N_EXTERN,peek()->line);
+            /* extern func name(params) -> ret  OR  extern type name(params) */
+            if(peek()->type==TT_FUNC){
+                advance();skip_nl();
+                Token *nm=expect(TT_IDENT,"function name");
+                n->fname=xstrdup(nm->val);skip_nl();
+                expect(TT_LPAREN,"(");skip_nl();
+                while(!check(TT_RPAREN)&&!check(TT_EOF)){
+                    if(peek()->type==TT_VOID&&gpos+1<gntoks&&gtoks[gpos+1].type==TT_RPAREN){advance();break;}
+                    TypeRef *pty=parse_type();skip_nl();
+                    /* param name optional in extern */
+                    char *pname="";
+                    if(peek()->type==TT_IDENT){Token *pn=advance();pname=xstrdup(pn->val);}
+                    Param p;p.name=pname;p.type=pty;
+                    pl_push(&n->params,p);skip_nl();
+                    if(!match(TT_COMMA))break;skip_nl();
+                }
+                expect(TT_RPAREN,")");skip_nl();
+                if(match(TT_ARROW)){skip_nl();n->rettype=parse_type();}
+                else n->rettype=mktype(TY_VOID,NULL,NULL);
+            } else {
+                /* C-style: extern rettype name(params) */
+                TypeRef *ret=parse_type();skip_nl();
+                Token *nm=expect(TT_IDENT,"function name");
+                n->fname=xstrdup(nm->val);n->rettype=ret;skip_nl();
+                expect(TT_LPAREN,"(");skip_nl();
+                while(!check(TT_RPAREN)&&!check(TT_EOF)){
+                    if(peek()->type==TT_VOID&&gpos+1<gntoks&&gtoks[gpos+1].type==TT_RPAREN){advance();break;}
+                    TypeRef *pty=parse_type();skip_nl();
+                    char *pname="";
+                    if(peek()->type==TT_IDENT){Token *pn=advance();pname=xstrdup(pn->val);}
+                    Param p;p.name=pname;p.type=pty;
+                    pl_push(&n->params,p);skip_nl();
+                    if(!match(TT_COMMA))break;skip_nl();
+                }
+                expect(TT_RPAREN,")");skip_nl();
+            }
+            nl_push(&prog->body,n);
+        }
         else if(t==TT_SEMI||t==TT_NEWLINE){advance();}
         else die("%s:%d: unexpected top-level token '%s'",peek()->file,peek()->line,peek()->val);
     }
@@ -1558,7 +1599,7 @@ static void typecheck(Node *prog){
                 si2->fields=n->fields.d;si2->nfields=n->fields.n;
             }
         }
-        if(n->kind==N_FUNC){
+        if(n->kind==N_FUNC||n->kind==N_EXTERN){
             if(nfsigs>=1024)die("too many functions");
             fsigs[nfsigs].name=xstrdup(n->fname);
             fsigs[nfsigs].rettype=n->rettype;
@@ -3515,6 +3556,11 @@ static void codegen(Node *prog){
     for(int i=0;i<prog->body.n;i++){
         Node *n=prog->body.d[i];
         if(n->kind==N_IMPORT&&n->import_path&&strcmp(n->import_path,"std")==0)has_std=1;
+    }
+    /* emit .extern declarations for all extern funcs */
+    for(int i=0;i<prog->body.n;i++){
+        Node *n=prog->body.d[i];
+        if(n->kind==N_EXTERN) out(".extern %s\n",n->fname);
     }
     out(".section .text\n\n");
     if(arch==ARCH_X86_64){

@@ -1,0 +1,81 @@
+// ObjFalcon SDL2 bindings
+// Usage: import "sdl"
+// Compile: ofcc prog.ofc -arch x86-64-linux -o prog.s
+//          as prog.s -o prog.o
+//          ld prog.o -lSDL2 -o prog
+
+// SDL_Init flags
+#define SDL_INIT_VIDEO  32
+#define SDL_INIT_AUDIO  16
+#define SDL_INIT_EVENTS 16384
+
+// SDL_CreateWindow flags
+#define SDL_WINDOW_SHOWN       4
+#define SDL_WINDOW_RESIZABLE   32
+#define SDL_WINDOW_FULLSCREEN  1
+
+// SDL_WindowPos
+#define SDL_WINDOWPOS_CENTERED 805240832
+
+// Event types
+#define SDL_QUIT        256
+#define SDL_KEYDOWN     768
+#define SDL_KEYUP       769
+#define SDL_MOUSEMOTION 1024
+#define SDL_MOUSEBUTTONDOWN 1025
+#define SDL_MOUSEBUTTONUP   1026
+
+// Renderer flags
+#define SDL_RENDERER_ACCELERATED  2
+#define SDL_RENDERER_PRESENTVSYNC 4
+#define SDL_RENDERER_SOFTWARE     1
+
+// SDL core
+extern int SDL_Init(int flags)
+extern void SDL_Quit()
+extern str SDL_GetError()
+
+// Window
+extern int SDL_CreateWindow(str title, int x, int y, int w, int h, int flags)
+extern void SDL_DestroyWindow(int window)
+extern void SDL_GetWindowSize(int window, int w, int h)
+extern void SDL_SetWindowTitle(int window, str title)
+
+// Renderer
+extern int SDL_CreateRenderer(int window, int index, int flags)
+extern void SDL_DestroyRenderer(int renderer)
+extern int SDL_RenderClear(int renderer)
+extern void SDL_RenderPresent(int renderer)
+extern int SDL_SetRenderDrawColor(int renderer, int r, int g, int b, int a)
+extern int SDL_RenderDrawLine(int renderer, int x1, int y1, int x2, int y2)
+extern int SDL_RenderDrawPoint(int renderer, int x, int y)
+extern int SDL_RenderFillRect(int renderer, int rect)
+extern int SDL_RenderDrawRect(int renderer, int rect)
+
+// Texture
+extern int SDL_CreateTexture(int renderer, int format, int access, int w, int h)
+extern void SDL_DestroyTexture(int texture)
+extern int SDL_RenderCopy(int renderer, int texture, int srcrect, int dstrect)
+extern int SDL_UpdateTexture(int texture, int rect, int pixels, int pitch)
+extern int SDL_LockTexture(int texture, int rect, int pixels, int pitch)
+extern void SDL_UnlockTexture(int texture)
+
+// Surface
+extern int SDL_CreateRGBSurface(int flags, int w, int h, int depth, int rmask, int gmask, int bmask, int amask)
+extern void SDL_FreeSurface(int surface)
+extern int SDL_CreateTextureFromSurface(int renderer, int surface)
+
+// Events — SDL_Event is 56 bytes; we pass a pointer (int = address)
+extern int SDL_PollEvent(int event)
+extern int SDL_WaitEvent(int event)
+
+// Timing
+extern void SDL_Delay(int ms)
+extern int SDL_GetTicks()
+
+// Keyboard
+extern int SDL_GetKeyboardState(int numkeys)
+
+// Mouse
+extern int SDL_GetMouseState(int x, int y)
+extern void SDL_WarpMouseInWindow(int window, int x, int y)
