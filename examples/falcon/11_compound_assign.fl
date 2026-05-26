@@ -1,0 +1,19 @@
+import "std"
+
+# Compound assignment operators: += -= *= /= %= &= |= ^= <<= >>=
+func main() -> void {
+    x: int = 16
+
+    x += 4    print(x)   # 20
+    x -= 5    print(x)   # 15
+    x *= 2    print(x)   # 30
+    x /= 3    print(x)   # 10
+    x %= 3    print(x)   # 1
+
+    y: int = 0xFF
+    y &= 0x0F   print(y)   # 15
+    y |= 0x30   print(y)   # 63
+    y ^= 0x0F   print(y)   # 48
+    y <<= 1     print(y)   # 96
+    y >>= 2     print(y)   # 24
+}

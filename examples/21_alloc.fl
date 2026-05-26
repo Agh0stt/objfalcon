@@ -1,0 +1,13 @@
+import "std"
+
+# Heap allocation with _flr_alloc (bump allocator, 1 MB).
+# Returns an int pointer; use __peek / __poke to read / write.
+func main() -> void {
+    ptr: int = _flr_alloc(16)   # 16 bytes
+
+    __poke(ptr,     100)
+    __poke(ptr + 4, 200)
+
+    print(__peek(ptr))       # 100
+    print(__peek(ptr + 4))   # 200
+}

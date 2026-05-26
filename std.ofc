@@ -1,0 +1,84 @@
+# std.fl — Falcon Standard Library
+# Thin wrappers over the _flr_* symbols in flr.o / flr.s.
+# Import with:  import "std"
+#
+# A real std.fl is imported as normal Falcon source. Link flr.o if you call
+# these _flr_* runtime wrappers. If no std.fl is found, the compiler falls back
+# to its virtual built-in std and enables runtime-backed print().
+#
+# Available functions (mostly thin wrappers over _flr_* symbols):
+
+# ── I/O ──────────────────────────────────────────────────────────────
+
+func print_str(s: str) -> void {
+    # Explicit string output wrapper. Runtime-backed print() is only magic when
+    # the virtual built-in std is used.
+    __syscall(4, 1, s, str_len(s))  # sys_write fd=1 buf=s len
+}
+
+func print(s: str) -> void {
+    print_str(s)
+    __syscall(4, 1, "\n", 1)
+}
+
+func print_int(n: int) -> void {
+    # Explicit integer output wrapper. Runtime-backed print() is only magic when
+    # the virtual built-in std is used.
+    __syscall(4, 1, int_to_str(n), str_len(int_to_str(n)))
+}
+
+# ── String utilities ──────────────────────────────────────────────────
+
+func str_len(s: str) -> int {
+    return _flr_str_len(s)
+}
+
+func str_eq(a: str, b: str) -> int {
+    return _flr_str_eq(a, b)
+}
+
+func int_to_str(n: int) -> str {
+    return _flr_int_to_str(n)
+}
+
+func str_to_int(s: str) -> int {
+    return _flr_str_to_int(s)
+}
+
+# ── Math ──────────────────────────────────────────────────────────────
+
+func abs(n: int) -> int {
+    return _flr_abs(n)
+}
+
+func min(a: int, b: int) -> int {
+    return _flr_min(a, b)
+}
+
+func max(a: int, b: int) -> int {
+    return _flr_max(a, b)
+}
+
+# ── Memory ────────────────────────────────────────────────────────────
+
+func alloc(size: int) -> int {
+    # Returns a pointer (int) to size bytes of zero-initialised heap memory.
+    # Uses the 1 MB bump allocator in flr.o; there is no free().
+    return _flr_alloc(size)
+}
+
+func free(ptr: int) -> void {
+    # No-op in the bump allocator. Provided so code is portable.
+    _flr_free(ptr)
+}
+
+# ── Control ───────────────────────────────────────────────────────────
+
+func exit(code: int) -> void {
+    _flr_exit(code)
+}
+
+func assert(cond: int, msg: str) -> void {
+    # If cond == 0 prints "assertion failed: <msg>" to stderr and exits(1).
+    _flr_assert(cond, msg)
+}

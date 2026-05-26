@@ -1,0 +1,9 @@
+import "std"
+
+// String variable declaration and printing.
+int main() {
+    str greeting = "hello from a string variable";
+    print(greeting);
+    print("and a plain string literal too");
+    return 0;
+}

@@ -1,0 +1,32 @@
+import "std"
+
+# typedef — type aliases.
+# Three forms: primitive alias, struct alias, inline struct.
+
+typedef int Number
+
+struct Point { x: int  y: int }
+typedef Point Vec2
+
+typedef struct {
+    r: int
+    g: int
+    b: int
+} Color
+
+func main() -> void {
+    n: Number = 99
+    print(n)          # 99
+
+    v: Vec2 = _flr_alloc(8)
+    v.x = 3
+    v.y = 4
+    print(v.x)        # 3
+    print(v.y)        # 4
+
+    c: Color = _flr_alloc(12)
+    c.r = 255
+    c.g = 128
+    c.b = 0
+    print(c.r)        # 255
+}

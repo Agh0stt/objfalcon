@@ -1,0 +1,8 @@
+import "std"
+
+# String variable declaration and printing.
+func main() -> void {
+    greeting: str = "hello from a string variable"
+    print(greeting)
+    print("and a plain string literal too")
+}

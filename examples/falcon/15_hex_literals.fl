@@ -1,0 +1,11 @@
+import "std"
+
+# Hexadecimal integer literals.
+func main() -> void {
+    color: int = 0xFF5733
+    mask:  int = 0x00FF00
+
+    print(color)          # 16734003
+    print(color & mask)   # 22272  (the green channel)
+    print(0xDEAD)         # 57005
+}

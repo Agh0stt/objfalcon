@@ -1,0 +1,25 @@
+import "std"
+
+# break exits a loop early.
+# continue skips to the next iteration.
+func main() -> void {
+    # print 1..4, stop before 5
+    i: int = 0
+    while (true) {
+        i += 1
+        if (i == 5) {
+            break
+        }
+        print(i)
+    }
+
+    # print only odd numbers 1..9
+    j: int = 0
+    while (j < 10) {
+        j += 1
+        if (j % 2 == 0) {
+            continue
+        }
+        print(j)
+    }
+}

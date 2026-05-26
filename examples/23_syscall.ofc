@@ -1,0 +1,9 @@
+import "std"
+
+// __syscall — raw Linux int 0x80.
+// sys_write(fd=1, buf, len) = syscall 4.
+int main() {
+    str msg = "direct syscall\n";
+    __syscall(4, 1, msg, _flr_str_len(msg));
+    return 0;
+}

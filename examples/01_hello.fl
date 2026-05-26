@@ -1,0 +1,6 @@
+import "std"
+
+# The simplest possible Falcon program.
+func main() -> void {
+    print("Hello, World!")
+}

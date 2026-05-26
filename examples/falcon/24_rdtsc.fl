@@ -1,0 +1,8 @@
+import "std"
+
+# __rdtsc — read the CPU timestamp counter (low 32 bits in eax).
+# Useful as a cheap timer or entropy source.
+func main() -> void {
+    t: int = __rdtsc()
+    print(t)   # some large number — the CPU cycle count
+}

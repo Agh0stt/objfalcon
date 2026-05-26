@@ -1,0 +1,7 @@
+import "std"
+
+// The simplest possible ObjFalcon program.
+int main() {
+    print("Hello, World!");
+    return 0;
+}

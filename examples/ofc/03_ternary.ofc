@@ -1,0 +1,10 @@
+import "std"
+
+int main() {
+    int x = 10;
+    int y = x > 5 ? 100 : 200;
+    print(y);
+    int z = x < 5 ? 100 : 200;
+    print(z);
+    return 0;
+}

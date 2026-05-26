@@ -1,0 +1,12 @@
+import "std"
+
+// Hexadecimal integer literals.
+int main() {
+    int color = 0xFF5733;
+    int mask  = 0x00FF00;
+
+    print(color);          // 16734003
+    print(color & mask);   // 22272
+    print(0xDEAD);         // 57005
+    return 0;
+}

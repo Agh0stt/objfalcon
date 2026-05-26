@@ -1,0 +1,16 @@
+import "std"
+
+# Array literals and indexing.
+# Arrays are heap-allocated; index 0 is length, elements start at index 1
+# (the compiler emits:  leal 8(%eax,%ecx,4) for arr[i]).
+func main() -> void {
+    nums: [int] = [10, 20, 30, 40, 50]
+
+    print(nums[0])   # 10
+    print(nums[2])   # 30
+    print(nums[4])   # 50
+
+    # mutate an element
+    nums[1] = 99
+    print(nums[1])   # 99
+}

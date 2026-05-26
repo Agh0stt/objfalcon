@@ -1,0 +1,13 @@
+import "std"
+
+# Integer variable declaration, assignment, and arithmetic.
+func main() -> void {
+    a: int = 10
+    b: int = 3
+
+    print(a + b)
+    print(a - b)
+    print(a * b)
+    print(a / b)
+    print(a % b)
+}

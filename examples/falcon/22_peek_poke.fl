@@ -1,0 +1,13 @@
+import "std"
+
+# __peek / __poke — raw 32-bit memory read/write.
+# __peekb / __pokeb — raw byte read/write.
+func main() -> void {
+    buf: int = _flr_alloc(8)
+
+    __poke(buf, 0xDEADBEEF)
+    print(__peek(buf))          # -559038737  (signed 0xDEADBEEF)
+
+    __pokeb(buf, 0x41)          # 'A'
+    print(__peekb(buf))         # 65
+}

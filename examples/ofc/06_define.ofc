@@ -1,0 +1,7 @@
+import "std"
+#define MAX 100
+
+int main() {
+    print("ObjFalcon defines work");
+    return 0;
+}

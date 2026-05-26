@@ -1,0 +1,6 @@
+# Project-local std.fl.
+# Importing this file should not enable Falcon's virtual std runtime.
+
+func print(s: str) -> void {
+    __syscall(4, 1, s, 17)
+}

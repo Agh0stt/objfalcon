@@ -1,0 +1,7 @@
+import "std"
+
+int main() {
+    asm("nop");
+    print("inline asm ok");
+    return 0;
+}

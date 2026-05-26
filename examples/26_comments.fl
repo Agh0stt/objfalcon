@@ -1,0 +1,12 @@
+import "std"
+
+# This is a line comment — everything after # is ignored.
+
+/* This is a
+   block comment.
+   It can span multiple lines. */
+
+func main() -> void {
+    x: int = 1 # inline comment
+    print(x)
+}

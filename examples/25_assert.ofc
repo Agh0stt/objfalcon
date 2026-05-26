@@ -1,0 +1,9 @@
+import "std"
+
+// _flr_assert(cond, msg) — silent on pass, exits on fail.
+int main() {
+    _flr_assert(1, "this should not fire");
+    _flr_assert(2 + 2 == 4, "math is broken");
+    print(1);   // reaches here
+    return 0;
+}

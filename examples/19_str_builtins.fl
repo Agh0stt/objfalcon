@@ -1,0 +1,14 @@
+import "std"
+
+# Runtime string utilities: str_len, str_eq, int_to_str, str_to_int.
+func main() -> void {
+    s: str = "falcon"
+
+    print(_flr_str_len(s))           # 6
+    print(_flr_str_eq(s, "falcon"))  # 1  (equal)
+    print(_flr_str_eq(s, "other"))   # 0
+
+    n: int = _flr_str_to_int("1234")
+    print(n)                          # 1234
+    print(_flr_str_to_int("-99"))     # -99
+}

@@ -1,0 +1,11 @@
+import "std"
+
+# Unary operators: negation (-), bitwise NOT (~), logical not (not).
+func main() -> void {
+    x: int = 42
+
+    print(-x)       # -42
+    print(~0)       # -1  (all bits set)
+    print(not 0)    # 1
+    print(not 1)    # 0
+}

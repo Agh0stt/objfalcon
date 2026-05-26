@@ -1,0 +1,9 @@
+import "std"
+
+# Runtime math helpers: abs, min, max.
+func main() -> void {
+    print(_flr_abs(-7))        # 7
+    print(_flr_abs(7))         # 7
+    print(_flr_min(3, 9))      # 3
+    print(_flr_max(3, 9))      # 9
+}

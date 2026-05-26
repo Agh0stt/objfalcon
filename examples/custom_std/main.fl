@@ -1,0 +1,5 @@
+import "std"
+
+func main() -> void {
+    print("custom std works\n")
+}

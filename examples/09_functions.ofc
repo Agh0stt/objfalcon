@@ -1,0 +1,18 @@
+import "std"
+
+// Defining and calling functions with parameters and return values.
+
+int add(int a, int b) {
+    return a + b;
+}
+
+void greet(str name) {
+    print(name);
+}
+
+int main() {
+    int result = add(3, 4);
+    print(result);      // 7
+    greet("objfalcon");
+    return 0;
+}

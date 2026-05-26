@@ -1,0 +1,14 @@
+import "std"
+
+// This is a C-style line comment.
+
+/* This is a
+   block comment. */
+
+#define UNUSED 0
+
+int main() {
+    int x = 1; // inline comment
+    print(x);
+    return 0;
+}

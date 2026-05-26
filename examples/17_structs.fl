@@ -1,0 +1,32 @@
+import "std"
+
+# Struct definition and field access.
+# Struct variables are pointers — allocate with _flr_alloc(fields * 4).
+struct Point {
+    x: int
+    y: int
+}
+
+struct Rect {
+    x: int
+    y: int
+    w: int
+    h: int
+}
+
+func main() -> void {
+    p: Point = _flr_alloc(8)   # 2 fields x 4 bytes
+    p.x = 3
+    p.y = 7
+    print(p.x)        # 3
+    print(p.y)        # 7
+    print(p.x + p.y)  # 10
+
+    r: Rect = _flr_alloc(16)   # 4 fields x 4 bytes
+    r.x = 0
+    r.y = 0
+    r.w = 1920
+    r.h = 1080
+    print(r.w)   # 1920
+    print(r.h)   # 1080
+}

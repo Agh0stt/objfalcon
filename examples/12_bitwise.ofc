@@ -1,0 +1,15 @@
+import "std"
+
+// Bitwise operators: & | ^ ~ << >>
+int main() {
+    int a = 15;    // 0x0F = 0000 1111
+    int b = 170;   // 0xAA = 1010 1010
+
+    print(a & b);    // AND  = 10
+    print(a | b);    // OR   = 175
+    print(a ^ b);    // XOR  = 165
+    print(~a);       // NOT  = -16
+    print(1 << 4);   // SHL  = 16
+    print(128 >> 3); // SHR  = 16
+    return 0;
+}

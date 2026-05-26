@@ -1,0 +1,32 @@
+# kernel.fl — Bare-metal Falcon kernel
+# Prints "Hello, World!" directly to VGA text buffer at 0xB8000.
+# Each VGA cell is 2 bytes: [char][attr]
+# attr 0x0F = bright white on black.
+
+func vga_clear() -> void {
+    vga: int = 0xB8000
+    end: int = 0xB8000 + 80 * 25 * 2
+    while (vga < end) {
+        __pokeb(vga,     0x20)   # space
+        __pokeb(vga + 1, 0x0F)   # attr: white on black
+        vga += 2
+    }
+}
+
+func vga_print(msg: int) -> void {
+    vga: int = 0xB8000
+    i: int = 0
+    while (true) {
+        c: int = __peekb(msg + i)
+        if (c == 0) { break }
+        __pokeb(vga,     c)      # character byte
+        __pokeb(vga + 1, 0x0F)  # attribute byte: white on black
+        vga += 2
+        i += 1
+    }
+}
+
+func main() -> void {
+    vga_clear()
+    vga_print("Hello, World!")
+}

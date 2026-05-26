@@ -1,0 +1,16 @@
+# Falcon compiler/build outputs
+/falconc
+/flr.o
+/hello
+/hello.o
+/hello.s
+
+# Example OS generated outputs
+/examples/EXAMPLE-OS/*.o
+/examples/EXAMPLE-OS/kernel.s
+/examples/EXAMPLE-OS/kernel.elf
+
+# Temporary/editor noise
+*.tmp
+*.log
+*~

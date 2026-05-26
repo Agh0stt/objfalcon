@@ -1,0 +1,12 @@
+import "std"
+
+# _flr_assert(cond, msg) — passes silently when cond != 0,
+# prints "assertion failed: <msg>" to stderr and exits(1) otherwise.
+func main() -> void {
+    _flr_assert(1, "this should not fire")
+    _flr_assert(2 + 2 == 4, "math is broken")
+    print(1)   # reaches here
+
+    # Uncomment to see a failing assertion:
+    # _flr_assert(0, "intentional failure")
+}

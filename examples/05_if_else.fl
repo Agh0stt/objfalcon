@@ -1,0 +1,14 @@
+import "std"
+
+# if / elif / else branching.
+func main() -> void {
+    x: int = 7
+
+    if (x < 0) {
+        print("negative")
+    } elif (x == 0) {
+        print("zero")
+    } else {
+        print("positive")
+    }
+}

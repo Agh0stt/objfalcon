@@ -1,0 +1,8 @@
+import "std"
+
+// __rdtsc — read the CPU timestamp counter (low 32 bits).
+int main() {
+    int t = __rdtsc();
+    print(t);   // some large CPU cycle count
+    return 0;
+}

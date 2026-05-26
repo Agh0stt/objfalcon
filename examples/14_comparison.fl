@@ -1,0 +1,14 @@
+import "std"
+
+# Comparison operators: == != < > <= >=
+func main() -> void {
+    a: int = 5
+    b: int = 10
+
+    print(a == b)   # 0
+    print(a != b)   # 1
+    print(a <  b)   # 1
+    print(a >  b)   # 0
+    print(a <= 5)   # 1
+    print(b >= 10)  # 1
+}

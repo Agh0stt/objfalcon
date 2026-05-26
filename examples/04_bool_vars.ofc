@@ -1,0 +1,11 @@
+import "std"
+
+// Boolean literals and variables.
+int main() {
+    bool t = true;
+    bool f = false;
+
+    print(t);   // 1
+    print(f);   // 0
+    return 0;
+}

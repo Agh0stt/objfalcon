@@ -1,0 +1,10 @@
+import "std"
+
+# Boolean literals and a variable.
+func main() -> void {
+    t: bool = true
+    f: bool = false
+
+    print(t)   # prints 1
+    print(f)   # prints 0
+}

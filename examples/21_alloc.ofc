@@ -1,0 +1,13 @@
+import "std"
+
+// Heap allocation with _flr_alloc.
+int main() {
+    int ptr = _flr_alloc(16);
+
+    __poke(ptr,     100);
+    __poke(ptr + 4, 200);
+
+    print(__peek(ptr));       // 100
+    print(__peek(ptr + 4));   // 200
+    return 0;
+}

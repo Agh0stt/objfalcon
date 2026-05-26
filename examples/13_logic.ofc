@@ -1,0 +1,15 @@
+import "std"
+
+// Logical operators: and  or  not
+int main() {
+    bool t = true;
+    bool f = false;
+
+    print(t and t);   // 1
+    print(t and f);   // 0
+    print(f or  t);   // 1
+    print(f or  f);   // 0
+    print(not t);     // 0
+    print(not f);     // 1
+    return 0;
+}

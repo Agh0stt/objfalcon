@@ -1,0 +1,15 @@
+import "std"
+
+// Runtime string utilities.
+int main() {
+    str s = "objfalcon";
+
+    print(_flr_str_len(s));               // 9
+    print(_flr_str_eq(s, "objfalcon"));   // 1
+    print(_flr_str_eq(s, "other"));       // 0
+
+    int n = _flr_str_to_int("1234");
+    print(n);                              // 1234
+    print(_flr_str_to_int("-99"));         // -99
+    return 0;
+}

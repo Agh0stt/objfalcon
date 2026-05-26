@@ -1,0 +1,32 @@
+import "std"
+
+// Struct definition and field access.
+struct Point {
+    x: int
+    y: int
+}
+
+struct Rect {
+    x: int
+    y: int
+    w: int
+    h: int
+}
+
+int main() {
+    p: Point = _flr_alloc(8);
+    p.x = 3;
+    p.y = 7;
+    print(p.x);        // 3
+    print(p.y);        // 7
+    print(p.x + p.y);  // 10
+
+    r: Rect = _flr_alloc(16);
+    r.x = 0;
+    r.y = 0;
+    r.w = 1920;
+    r.h = 1080;
+    print(r.w);   // 1920
+    print(r.h);   // 1080
+    return 0;
+}

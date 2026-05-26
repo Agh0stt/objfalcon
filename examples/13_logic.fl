@@ -1,0 +1,14 @@
+import "std"
+
+# Logical operators: and  or  not
+func main() -> void {
+    t: bool = true
+    f: bool = false
+
+    print(t and t)   # 1
+    print(t and f)   # 0
+    print(f or  t)   # 1
+    print(f or  f)   # 0
+    print(not t)     # 0
+    print(not f)     # 1
+}

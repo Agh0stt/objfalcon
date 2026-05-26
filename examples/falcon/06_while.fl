@@ -1,0 +1,10 @@
+import "std"
+
+# while loop — count down from 5 to 1.
+func main() -> void {
+    n: int = 5
+    while (n > 0) {
+        print(n)
+        n -= 1
+    }
+}
