@@ -436,9 +436,87 @@ static void expand_imports(int start,const char *from_file){
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   TOKEN STREAM
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ── #define macro table ──────────────────────────────────────────── */
+#define MAX_DEFINES 512
+typedef struct{char *name;char *value;}Define;
+static Define defines[MAX_DEFINES];
+static int ndefines=0;
+
+static void set_define(const char *name,const char *value){
+    for(int i=0;i<ndefines;i++)
+        if(strcmp(defines[i].name,name)==0){free(defines[i].value);defines[i].value=xstrdup(value);return;}
+    if(ndefines>=MAX_DEFINES)die("too many #defines");
+    defines[ndefines].name=xstrdup(name);
+    defines[ndefines].value=xstrdup(value);
+    ndefines++;
+}
+static void unset_define(const char *name){
+    for(int i=0;i<ndefines;i++)
+        if(strcmp(defines[i].name,name)==0){
+            free(defines[i].name);free(defines[i].value);
+            defines[i]=defines[--ndefines];return;
+        }
+}
+static const char *get_define(const char *name){
+    for(int i=0;i<ndefines;i++)if(strcmp(defines[i].name,name)==0)return defines[i].value;
+    return NULL;
+}
+static int is_defined(const char *name){return get_define(name)!=NULL;}
+
+/* Scan token stream for #define / #undef directives to populate the table.
+   Then substitute every TT_IDENT whose name is a defined macro with the
+   macro's value re-tokenised inline.  Handles #ifdef / #ifndef skipping.   */
+static void expand_defines(void){
+    /* Pass 1: collect all #define / #undef (respects #ifdef/#ifndef skipping) */
+    int skip=0;
+    for(int i=0;i<gntoks;i++){
+        TT t=gtoks[i].type;
+        if(t==TT_HASH_IFDEF&&i+1<gntoks){
+            i++;if(!is_defined(gtoks[i].val))skip++;continue;
+        }
+        if(t==TT_HASH_IFNDEF&&i+1<gntoks){
+            i++;if(is_defined(gtoks[i].val))skip++;continue;
+        }
+        if(t==TT_HASH_ENDIF){if(skip>0)skip--;continue;}
+        if(t==TT_HASH_ELSE){/* toggle innermost skip */if(skip>0)skip--;else skip++;continue;}
+        if(skip)continue;
+        if(t==TT_HASH_DEFINE&&i+2<gntoks&&gtoks[i+1].type==TT_IDENT){
+            set_define(gtoks[i+1].val,gtoks[i+2].val);i+=2;continue;
+        }
+        if(t==TT_HASH_UNDEF&&i+1<gntoks&&gtoks[i+1].type==TT_IDENT){
+            unset_define(gtoks[i+1].val);i++;continue;
+        }
+    }
+    /* Pass 2: substitute TT_IDENT tokens that match a defined macro.
+       We re-tokenise the macro value into a small temp buffer then splice. */
+    for(int i=0;i<gntoks;i++){
+        if(gtoks[i].type!=TT_IDENT)continue;
+        const char *val=get_define(gtoks[i].val);
+        if(!val||val[0]=='\0')continue;
+        /* re-tokenise the value string */
+        int saved_ntoks=gntoks;
+        int splice_start=gntoks;
+        tokenize(val,gtoks[i].file);
+        int splice_cnt=gntoks-splice_start;
+        if(splice_cnt<=0){gntoks=saved_ntoks;continue;}
+        /* remove EOF if tokenize appended one */
+        /* splice_cnt tokens are at gtoks[splice_start..] — move them to position i */
+        Token *tmp=malloc(splice_cnt*sizeof(Token));
+        memcpy(tmp,&gtoks[splice_start],splice_cnt*sizeof(Token));
+        /* shift tail (everything after position i, excluding new tokens) */
+        int tail=saved_ntoks-(i+1);
+        if(i+1+tail+splice_cnt>=MAX_TOKS)die("token buffer overflow during macro expansion");
+        memmove(&gtoks[i+splice_cnt],&gtoks[i+1],tail*sizeof(Token));
+        memcpy(&gtoks[i],tmp,splice_cnt*sizeof(Token));
+        free(tmp);
+        gntoks=i+splice_cnt+tail;
+        /* skip over the newly inserted tokens so we don't re-expand them */
+        i+=splice_cnt-1;
+    }
+}
+
+
+/* TOKEN STREAM */
 
 static Token *peek(void)    {return &gtoks[gpos];}
 static Token *advance(void) {Token *t=&gtoks[gpos];if(gpos<gntoks-1)gpos++;return t;}
@@ -1298,7 +1376,7 @@ static TypeRef *builtin_rettype(const char *name){
 }
 
 static TypeRef *tc_expr(Node *n,TypeRef *ret){
-    if(!n){n->etype=mktype(TY_VOID,NULL,NULL);return n->etype;}
+    if(!n){return mktype(TY_VOID,NULL,NULL);}
     switch(n->kind){
     case N_INTLIT:  n->etype=mktype(TY_INT,NULL,NULL); break;
     case N_LONGLIT: n->etype=mktype(TY_LONG,NULL,NULL);break;
@@ -1690,6 +1768,27 @@ static void gen_expr(Node *n);
 static void gen_stmt(Node *n);
 static void gen_func(Node *fn);
 static void gen_func64(Node *fn);
+
+/* Return byte offset of field 'fname' in the struct described by 'type'.
+   slot_sz is 4 for 32-bit, 8 for 64-bit.
+   Looks up only the correct struct when type is known; falls back to a
+   global scan so that raw-pointer / anonymous accesses still work. */
+static int field_offset_for(TypeRef *type, const char *fname, int slot_sz){
+    if(type && type->kind==TY_STRUCT && type->name){
+        StructInfo *si=find_struct(type->name);
+        if(si){
+            for(int fi=0;fi<si->nfields;fi++)
+                if(strcmp(si->fields[fi].name,fname)==0)return fi*slot_sz;
+            /* field truly not found in this struct — fall through to error */
+            return -1;
+        }
+    }
+    /* type unknown or not a struct: scan all structs (raw int ptr / freestanding) */
+    for(int si=0;si<nstructs;si++)
+        for(int fi=0;fi<structs[si].nfields;fi++)
+            if(strcmp(structs[si].fields[fi].name,fname)==0)return fi*slot_sz;
+    return -1;
+}
 
 /* ── long (64-bit) helpers emitted once into the output ──────────── */
 static int long_helpers_emitted=0;
@@ -2093,10 +2192,7 @@ static void gen_expr(Node *n){
         out("    movl (%%eax),%%eax\n");break;
     case N_FIELD:{
         gen_expr(n->left);
-        int found_off=-1;
-        for(int si=0;si<nstructs&&found_off<0;si++)
-            for(int fi=0;fi<structs[si].nfields;fi++)
-                if(strcmp(structs[si].fields[fi].name,n->sval)==0){found_off=fi*4;break;}
+        int found_off=field_offset_for(n->left->etype,n->sval,4);
         if(found_off<0)die("%s:%d: unknown field '%s'",n->file,n->line,n->sval);
         out("    movl %d(%%eax),%%eax\n",found_off);break;
     }
@@ -2155,10 +2251,7 @@ static void gen_store(Node *lv){
         out("    popl %%eax\n    movl %%eax,(%%edx)\n");break;
     case N_FIELD:{
         out("    pushl %%eax\n");gen_expr(lv->left);
-        int found_off=-1;
-        for(int si=0;si<nstructs&&found_off<0;si++)
-            for(int fi=0;fi<structs[si].nfields;fi++)
-                if(strcmp(structs[si].fields[fi].name,lv->sval)==0){found_off=fi*4;break;}
+        int found_off=field_offset_for(lv->left->etype,lv->sval,4);
         if(found_off<0)die("unknown field '%s'",lv->sval);
         out("    popl %%ecx\n    movl %%ecx,%d(%%eax)\n",found_off);break;
     }
@@ -2324,6 +2417,9 @@ static void gen_stmt(Node *n){
     case N_SWITCH:{
         int lp=lbl_cnt++;
         char old_brk[32];strcpy(old_brk,break_lbl);
+        /* use an internal label for break so we can emit the pop there */
+        char sw_end_lbl[32];
+        snprintf(sw_end_lbl,32,".Lswend%d",lp);
         snprintf(break_lbl,32,".Lswbrk%d",lp);
         gen_expr(n->cond);
         out("    pushl %%eax\n"); /* save switch value */
@@ -2346,8 +2442,11 @@ static void gen_stmt(Node *n){
             out(".Lcase%d_%d:\n",lp,i);
             for(int j=0;j<c->body.n;j++)gen_stmt(c->body.d[j]);
         }
-        out("    addl $4,%%esp\n"); /* pop switch value */
-        out("%s:\n",break_lbl);
+        /* fall-through after last case jumps to end (past the break label pop) */
+        out("    jmp %s\n",sw_end_lbl);
+        /* break target: pop switch value then fall to end */
+        out("%s:\n    addl $4,%%esp\n",break_lbl);
+        out("%s:\n",sw_end_lbl);
         strcpy(break_lbl,old_brk);
         break;
     }
@@ -2449,12 +2548,15 @@ static void emit_runtime(void){
     out("_flr_print_float:\n");
     out("    pushl %%ebp\n    movl %%esp,%%ebp\n");
     out("    pushl %%esi\n    pushl %%edi\n    pushl %%ebx\n");
-    /* load float from stack arg, convert to double for printing */
+    /* load float from stack arg, widen to double, pass to print_double */
     out("    flds 8(%%ebp)\n");
+    /* store as double (8 bytes) onto stack, then push the two halves lo,hi */
     out("    subl $8,%%esp\n    fstpl (%%esp)\n");
-    out("    pushl 4(%%esp)\n    pushl 4(%%esp)\n"); /* push hi,lo of double */
+    /* (%%esp) = lo word, 4(%%esp) = hi word — push hi first so cdecl sees lo,hi */
+    out("    pushl 4(%%esp)\n");   /* push hi */
+    out("    pushl 4(%%esp)\n");   /* push lo (esp advanced by 4, so orig lo is now at 4(%%esp)) */
     out("    call _flr_print_double\n    addl $8,%%esp\n");
-    out("    addl $8,%%esp\n");
+    out("    addl $8,%%esp\n");    /* discard the fstpl-allocated 8 bytes */
     out("    popl %%ebx\n    popl %%edi\n    popl %%esi\n    leave\n    ret\n\n");
 
     /* _flr_print_double(lo:int, hi:int) — print a 64-bit double */
@@ -2689,10 +2791,7 @@ static void gen_store64(Node *lv){
         break;
     case N_FIELD:{
         out("    pushq %%rax\n"); gen_expr64(lv->left);
-        int found_off=-1;
-        for(int si=0;si<nstructs&&found_off<0;si++)
-            for(int fi=0;fi<structs[si].nfields;fi++)
-                if(strcmp(structs[si].fields[fi].name,lv->sval)==0){found_off=fi*8;break;}
+        int found_off=field_offset_for(lv->left->etype,lv->sval,8);
         if(found_off<0)die("unknown field '%s'",lv->sval);
         out("    popq %%rcx\n    movq %%rcx,%d(%%rax)\n",found_off);
         break;
@@ -2997,10 +3096,7 @@ static void gen_expr64(Node *n){
         out("    movq (%%rax),%%rax\n"); break;
     case N_FIELD:{
         gen_expr64(n->left);
-        int found_off=-1;
-        for(int si=0;si<nstructs&&found_off<0;si++)
-            for(int fi=0;fi<structs[si].nfields;fi++)
-                if(strcmp(structs[si].fields[fi].name,n->sval)==0){found_off=fi*8;break;}
+        int found_off=field_offset_for(n->left->etype,n->sval,8);
         if(found_off<0)die("%s:%d: unknown field '%s'",n->file,n->line,n->sval);
         out("    movq %d(%%rax),%%rax\n",found_off); break;
     }
@@ -3175,7 +3271,10 @@ static void gen_stmt64(Node *n){
     }
     case N_SWITCH:{
         int lp=lbl_cnt++;
-        char ob[64];strcpy(ob,break_lbl);snprintf(break_lbl,64,".Lswbrk%d",lp);
+        char ob[64];strcpy(ob,break_lbl);
+        char sw_end_lbl64[64];
+        snprintf(sw_end_lbl64,64,".Lswend%d",lp);
+        snprintf(break_lbl,64,".Lswbrk%d",lp);
         gen_expr64(n->cond);out("    pushq %%rax\n");
         for(int i=0;i<n->body.n;i++){
             Node *c=n->body.d[i];
@@ -3187,7 +3286,9 @@ static void gen_stmt64(Node *n){
             Node *c=n->body.d[i];out(".Lcase%d_%d:\n",lp,i);
             for(int j=0;j<c->body.n;j++)gen_stmt64(c->body.d[j]);
         }
-        out("    addq $8,%%rsp\n%s:\n",break_lbl);
+        out("    jmp %s\n",sw_end_lbl64);
+        out("%s:\n    addq $8,%%rsp\n",break_lbl);
+        out("%s:\n",sw_end_lbl64);
         strcpy(break_lbl,ob);break;
     }
     case N_FUNC:gen_func64(n);break;
@@ -3630,6 +3731,7 @@ int main(int argc,char **argv){
     tokenize(src,infile);
     free(src);
     expand_imports(0,infile);
+    expand_defines();
     emit_tok(TT_EOF,"",0,infile);
 
     Node *prog=parse_program();
